@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#090909">
+  <title>Mochis Burgers | Tu burger, a tu manera</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg-glow glow-1"></div>
+  <div class="bg-glow glow-2"></div>
+  <header class="nav">
+    <div class="brand"><span class="brand-mark">🍔</span> MOCHIS <b>BURGERS</b></div>
+    <a class="nav-btn" href="#generador">Crear video</a>
+  </header>
+
+  <main>
+    <section class="hero" id="app">
+      <div class="hero-copy">
+        <span class="eyebrow">LA APP DE MOCHIS BURGERS</span>
+        <h1>El sabor que<br><span>se pide fácil.</span></h1>
+        <p>Descubre el menú de Mochis Burgers, arma tu pedido y disfruta tus favoritos desde tu celular.</p>
+        <div class="actions">
+          <a class="primary" href="#screens">Explorar la app <span>→</span></a>
+          <button class="secondary" id="openUploader">📸 Agregar imágenes</button>
+        </div>
+        <div class="mini-points">
+          <div><b>01</b><span>Elige</span></div>
+          <div><b>02</b><span>Ordena</span></div>
+          <div><b>03</b><span>Disfruta</span></div>
+        </div>
+      </div>
+
+      <div class="phone-stage">
+        <div class="orbit orbit-a"></div>
+        <div class="orbit orbit-b"></div>
+        <div class="floating-card card-top">🔥 <b>MUCHO SABOR</b></div>
+        <div class="floating-card card-bottom">🍟 <b>HECHO PARA ANTOJOS</b></div>
+
+        <div class="phone" id="phone">
+          <div class="phone-frame">
+            <div class="speaker"></div>
+            <div class="screen-wrap">
+              <img id="screenImage" src="img/pantalla1.svg" alt="Pantalla de la app Mochis Burgers">
+              <div class="screen-shine"></div>
+            </div>
+            <div class="home-bar"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+
+    <section class="generator-section" id="generador">
+      <div class="section-heading">
+        <span>CREA TU VIDEO</span>
+        <h2>Sube las pantallas y genera tu anuncio.</h2>
+      </div>
+      <div class="generator-panel">
+        <div class="generator-info">
+          <h3>Tu celular, tus imágenes.</h3>
+          <p>Agrega hasta 6 capturas de tu app. El celular las mostrará automáticamente mientras flota y gira. El video se graba directamente desde la animación real que ves en esta página.</p>
+          <button class="primary" id="openUploader2">📸 Agregar imágenes</button>
+          <button class="record-btn" id="recordVideo">● Crear video</button>
+          <div id="recordStatus" class="record-status"></div>
+          <div id="captureHelp" class="capture-help">Al pulsar crear video, selecciona <b>Esta pestaña</b> en la ventana de captura. Así el video será la animación real del sitio.</div>
+          <video id="generatedVideo" class="generated-video" controls playsinline hidden></video>
+          <a id="downloadGenerated" class="download-generated" hidden>⬇ Descargar video generado</a>
+        </div>
+        <div class="preview-mini">
+          <div class="mini-phone">
+            <div class="mini-notch"></div>
+            <img id="generatorPreview" src="img/pantalla1.svg" alt="Vista previa">
+          </div>
+        </div>
+      </div>
+      <p class="video-note">El video se graba desde la pestaña actual, por lo que conserva el mismo celular 3D, movimiento, luces, tarjetas y diseño que ves en pantalla. Se descarga como <b>WebM</b>.</p>
+    </section>
+
+    <section class="video-section" id="video">
+      <div class="section-heading">
+        <span>VIDEO PUBLICITARIO</span>
+        <h2>Mira la experiencia de Mochis Burgers.</h2>
+      </div>
+
+      <div class="video-box">
+        <video id="promoVideo" controls playsinline preload="metadata">
+          <source src="video/mochis-burgers-video.mp4" type="video/mp4">
+          Tu navegador no puede reproducir este video.
+        </video>
+        <a class="download-video" href="video/mochis-burgers-video.mp4" download="Mochis-Burgers-Video.mp4">
+          ⬇ Descargar video
+        </a>
+      </div>
+    </section>
+
+    <section class="screens-section" id="screens">
+      <div class="section-heading">
+        <span>ASÍ SE VE</span>
+        <h2>Tu negocio dentro de la app.</h2>
+      </div>
+      <div class="screen-strip">
+        <button class="screen-thumb active" data-index="0"><img src="img/pantalla1.svg" alt=""><b>Inicio</b></button>
+        <button class="screen-thumb" data-index="1"><img src="img/pantalla2.svg" alt=""><b>Menú</b></button>
+        <button class="screen-thumb" data-index="2"><img src="img/pantalla3.svg" alt=""><b>Producto</b></button>
+        <button class="screen-thumb" data-index="3"><img src="img/pantalla4.svg" alt=""><b>Pedido</b></button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>MOCHIS <b>BURGERS</b></div>
+    <span>El sabor más brutal.</span>
+  </footer>
+
+  <div class="modal" id="uploader">
+    <div class="modal-box">
+      <button class="close" id="closeUploader">×</button>
+      <span class="eyebrow">PERSONALIZA EL SITIO</span>
+      <h3>Sube las pantallas de tu app</h3>
+      <p>Selecciona hasta 4 imágenes. Se usarán en el teléfono y en las miniaturas de abajo.</p>
+      <div class="upload-grid" id="uploadGrid">
+        <label><span>Pantalla 1</span><input type="file" accept="image/*" data-slot="0"></label>
+        <label><span>Pantalla 2</span><input type="file" accept="image/*" data-slot="1"></label>
+        <label><span>Pantalla 3</span><input type="file" accept="image/*" data-slot="2"></label>
+        <label><span>Pantalla 4</span><input type="file" accept="image/*" data-slot="3"></label>
+<label><span>Pantalla 5</span><input type="file" accept="image/*" data-slot="4"></label>
+<label><span>Pantalla 6</span><input type="file" accept="image/*" data-slot="5"></label>
+      </div>
+      <small>Estas imágenes se muestran en tu navegador. Para dejarlas permanentes en Netlify, reemplaza los archivos de la carpeta <b>img</b>.</small>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
