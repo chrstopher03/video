@@ -11,6 +11,7 @@ let current = 0;
 let timer;
 
 function showScreen(index, restart = true) {
+  if (!screens[index]) return;
   current = index;
   if (screenImage) {
     screenImage.style.opacity = "0";
@@ -49,23 +50,24 @@ document.querySelectorAll('.upload-grid input').forEach(input => {
     if (slot === current && screenImage) screenImage.src = url;
     const gp = document.getElementById("generatorPreview");
     if (slot === current && gp) gp.src = url;
-    // If slots 5/6 were added, no thumbnail is required; they still participate in the video.
   });
 });
 
-// ---------------- VIDEO GENERATOR: GRABAR LA ANIMACIÓN REAL ----------------
+// ---------------- VIDEO: ESCRITORIO = CAPTURA REAL / MÓVIL = CAPTURA REAL + GUARDADO COMPATIBLE ----------------
 const recordButton = document.getElementById("recordVideo");
 const recordStatus = document.getElementById("recordStatus");
 const generatedVideo = document.getElementById("generatedVideo");
 const downloadGenerated = document.getElementById("downloadGenerated");
+const shareGenerated = document.getElementById("shareGenerated");
 const captureHelp = document.getElementById("captureHelp");
 let generatedUrl = null;
+let generatedBlob = null;
+let recording = false;
 
 function getRecordingMime() {
+  if (!window.MediaRecorder) return "";
   const types = [
-    "video/webm;codecs=vp9,opus",
     "video/webm;codecs=vp9",
-    "video/webm;codecs=vp8,opus",
     "video/webm;codecs=vp8",
     "video/webm"
   ];
@@ -76,128 +78,168 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function createVideo() {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-    recordStatus.textContent = "Tu navegador no permite grabar la pestaña. Abre el sitio en Chrome o Edge actualizado.";
-    return;
-  }
+function isMobile() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 700;
+}
 
+function showGenerated(blob) {
+  generatedBlob = blob;
+  if (generatedUrl) URL.revokeObjectURL(generatedUrl);
+  generatedUrl = URL.createObjectURL(blob);
+  generatedVideo.src = generatedUrl;
+  generatedVideo.hidden = false;
+  downloadGenerated.href = generatedUrl;
+  downloadGenerated.download = "Mochis-Burgers-Anuncio-Animacion-Real.webm";
+  downloadGenerated.hidden = false;
+  if (shareGenerated) shareGenerated.hidden = !(navigator.share && navigator.canShare);
+}
+
+async function saveOrShareVideo() {
+  if (!generatedBlob) return;
+  const file = new File([generatedBlob], "Mochis-Burgers-Anuncio-Animacion-Real.webm", { type: generatedBlob.type || "video/webm" });
+  try {
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        title: "Mochis Burgers",
+        text: "Video publicitario de Mochis Burgers",
+        files: [file]
+      });
+      recordStatus.textContent = "Video listo. Desde el menú de compartir puedes guardarlo en tu teléfono.";
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === "AbortError") return;
+  }
+  // Fallback: abrir el video para que el navegador muestre sus controles de guardado.
+  window.open(generatedUrl, "_blank");
+  recordStatus.textContent = "Se abrió el video. Usa el menú del navegador para guardarlo en tu teléfono.";
+}
+
+async function captureRealTab() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+    throw new Error("NO_CAPTURE");
+  }
+  return navigator.mediaDevices.getDisplayMedia({
+    video: {
+      frameRate: { ideal: 60, max: 60 },
+      displaySurface: "browser",
+      cursor: "never"
+    },
+    audio: false,
+    preferCurrentTab: true,
+    selfBrowserSurface: "include",
+    surfaceSwitching: "exclude"
+  });
+}
+
+async function createVideo() {
+  if (recording) return;
   if (!window.MediaRecorder) {
-    recordStatus.textContent = "Tu navegador no permite crear videos directamente.";
+    recordStatus.textContent = "Este navegador no permite crear videos. Prueba Chrome actualizado.";
     return;
   }
 
   const mime = getRecordingMime();
   if (!mime) {
-    recordStatus.textContent = "No se encontró un formato de video compatible.";
+    recordStatus.textContent = "Este navegador no tiene un formato de video compatible.";
     return;
   }
 
+  recording = true;
   recordButton.disabled = true;
   recordButton.textContent = "● Preparando...";
-  recordStatus.textContent = "Llevando la página a la animación principal...";
+  recordStatus.textContent = isMobile()
+    ? "En el teléfono se grabará la animación real de esta página."
+    : "Preparando la captura de la animación real...";
 
-  // La grabación debe mostrar exactamente el hero que ves en la página.
-  window.scrollTo({top: 0, behavior: "smooth"});
-  await sleep(900);
+  clearInterval(timer);
+  window.scrollTo({ top: 0, behavior: "instant" });
+  await sleep(700);
 
   let stream = null;
   try {
-    recordStatus.textContent = "En la ventana de captura, selecciona ESTA PESTAÑA y luego pulsa Compartir.";
+    // La captura sigue siendo la página REAL. No se crea un video alternativo en Canvas.
+    if (isMobile()) {
+      recordStatus.textContent = "Si aparece una ventana de compartir pantalla, selecciona esta pestaña y pulsa Compartir.";
+    } else {
+      recordStatus.textContent = "Selecciona ESTA PESTAÑA y pulsa Compartir.";
+    }
 
-    // Captura la pestaña real. No recreamos el teléfono en Canvas.
-    stream = await navigator.mediaDevices.getDisplayMedia({
-      video: {
-        frameRate: {ideal: 30, max: 60},
-        displaySurface: "browser",
-        cursor: "never"
-      },
-      audio: false,
-      preferCurrentTab: true,
-      selfBrowserSurface: "include",
-      surfaceSwitching: "exclude"
-    });
-
-    const videoTrack = stream.getVideoTracks()[0];
-    if (!videoTrack) throw new Error("No se obtuvo la pista de video.");
-
-    // Si el usuario cambia o detiene la captura desde el navegador, terminamos limpiamente.
-    let stoppedByUser = false;
-    videoTrack.addEventListener("ended", () => { stoppedByUser = true; });
+    stream = await captureRealTab();
+    const track = stream.getVideoTracks()[0];
+    if (!track) throw new Error("NO_TRACK");
 
     const chunks = [];
     const recorder = new MediaRecorder(stream, {
       mimeType: mime,
-      videoBitsPerSecond: 10000000
+      videoBitsPerSecond: 20000000
     });
 
     recorder.ondataavailable = e => {
       if (e.data && e.data.size) chunks.push(e.data);
     };
 
-    const stopped = new Promise(resolve => {
-      recorder.addEventListener("stop", resolve, {once: true});
-    });
+    let stoppedByUser = false;
+    track.addEventListener("ended", () => { stoppedByUser = true; });
 
-    // Pequeña cuenta regresiva para que el inicio no quede cortado.
-    recordStatus.textContent = "Grabando la animación real... 3";
+    recordStatus.textContent = "🔴 Iniciando en 3...";
     await sleep(1000);
-    recordStatus.textContent = "Grabando la animación real... 2";
+    recordStatus.textContent = "🔴 Iniciando en 2...";
     await sleep(1000);
-    recordStatus.textContent = "Grabando la animación real... 1";
+    recordStatus.textContent = "🔴 Iniciando en 1...";
     await sleep(1000);
 
     recorder.start(250);
-    recordStatus.textContent = "🔴 Grabando exactamente lo que aparece en la página...";
+    recordStatus.textContent = "🔴 Grabando la animación REAL en alta calidad...";
 
     const duration = 12000;
     const start = performance.now();
     while (performance.now() - start < duration) {
-      if (stoppedByUser || videoTrack.readyState === "ended") break;
-      const progress = Math.min((performance.now() - start) / duration, 1);
-      recordStatus.textContent = `🔴 Grabando la animación real... ${Math.round(progress * 100)}%`;
-      await sleep(100);
+      if (stoppedByUser || track.readyState === "ended") break;
+      const pct = Math.round(Math.min((performance.now() - start) / duration, 1) * 100);
+      recordStatus.textContent = `🔴 Grabando la página real... ${pct}%`;
+      await sleep(150);
     }
 
     if (recorder.state !== "inactive") recorder.stop();
-    await stopped;
+    await new Promise(resolve => recorder.addEventListener("stop", resolve, { once: true }));
 
-    const blob = new Blob(chunks, {type: mime});
-    if (!blob.size) throw new Error("El video quedó vacío.");
+    const blob = new Blob(chunks, { type: mime });
+    if (!blob.size) throw new Error("EMPTY");
+    showGenerated(blob);
 
-    if (generatedUrl) URL.revokeObjectURL(generatedUrl);
-    generatedUrl = URL.createObjectURL(blob);
+    // En escritorio intenta descargar. En móvil prioriza compartir/guardar, porque muchos navegadores móviles bloquean <a download> para blobs grandes.
+    if (!isMobile()) {
+      const a = document.createElement("a");
+      a.href = generatedUrl;
+      a.download = "Mochis-Burgers-Anuncio-Animacion-Real.webm";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      recordStatus.textContent = "¡Listo! Se descargó la animación REAL en alta calidad.";
+    } else {
+      recordStatus.textContent = "¡Video listo! Pulsa GUARDAR / COMPARTIR VIDEO para guardarlo en tu teléfono.";
+      setTimeout(() => saveOrShareVideo(), 250);
+    }
 
-    generatedVideo.src = generatedUrl;
-    generatedVideo.hidden = false;
-    downloadGenerated.href = generatedUrl;
-    downloadGenerated.download = "Mochis-Burgers-Anuncio-Animacion-Real.webm";
-    downloadGenerated.hidden = false;
-
-    // Descarga automática al terminar.
-    const a = document.createElement("a");
-    a.href = generatedUrl;
-    a.download = "Mochis-Burgers-Anuncio-Animacion-Real.webm";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
-    recordStatus.textContent = stoppedByUser
-      ? "La grabación se detuvo y el video quedó disponible abajo."
-      : "¡Listo! Se descargó el video con la animación REAL de la página.";
-    captureHelp.textContent = "El video conserva el diseño real del sitio: teléfono 3D, flotación, giro, luces, tarjetas y las pantallas que hayas cargado.";
+    captureHelp.textContent = "El archivo conserva la animación real: teléfono 3D, flotación, inclinación, luces, tarjetas y las pantallas cargadas. Se graba hasta 60 fps y con bitrate alto cuando el dispositivo lo permite.";
   } catch (err) {
     console.error(err);
     if (err && err.name === "NotAllowedError") {
-      recordStatus.textContent = "No se inició la grabación. Selecciona la pestaña actual y pulsa Compartir cuando aparezca la ventana.";
+      recordStatus.textContent = "No se inició la grabación. Permite la captura de pantalla/pestaña y vuelve a intentarlo.";
+    } else if (err && err.message === "NO_CAPTURE") {
+      recordStatus.textContent = "Este navegador del teléfono no permite capturar la pestaña. Abre el sitio en Chrome actualizado o usa el botón de compartir del video.";
     } else {
-      recordStatus.textContent = "No se pudo grabar la pestaña. Prueba nuevamente en Chrome o Edge actualizado.";
+      recordStatus.textContent = "No se pudo grabar la pestaña. Prueba de nuevo en Chrome actualizado.";
     }
   } finally {
     if (stream) stream.getTracks().forEach(track => track.stop());
+    recording = false;
     recordButton.disabled = false;
     recordButton.textContent = "● Crear video";
+    timer = setInterval(() => showScreen((current + 1) % screens.length, false), 3000);
   }
 }
 
 recordButton.addEventListener("click", createVideo);
+if (shareGenerated) shareGenerated.addEventListener("click", saveOrShareVideo);

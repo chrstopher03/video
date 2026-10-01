@@ -65,9 +65,9 @@
           <button class="primary" id="openUploader2">📸 Agregar imágenes</button>
           <button class="record-btn" id="recordVideo">● Crear video</button>
           <div id="recordStatus" class="record-status"></div>
-          <div id="captureHelp" class="capture-help">Al pulsar crear video, selecciona <b>Esta pestaña</b> en la ventana de captura. Así el video será la animación real del sitio.</div>
+          <div id="captureHelp" class="capture-help">En PC selecciona <b>Esta pestaña</b>. En teléfono, si aparece la ventana de captura, selecciona esta pestaña. El botón <b>Guardar / compartir video</b> ayuda a guardarlo cuando el navegador móvil bloquea las descargas directas.</div>
           <video id="generatedVideo" class="generated-video" controls playsinline hidden></video>
-          <a id="downloadGenerated" class="download-generated" hidden>⬇ Descargar video generado</a>
+          <div class="generated-actions"><a id="downloadGenerated" class="download-generated" hidden>⬇ Descargar video</a><button id="shareGenerated" class="download-generated share-generated" hidden>📲 Guardar / compartir video</button></div>
         </div>
         <div class="preview-mini">
           <div class="mini-phone">
@@ -76,7 +76,7 @@
           </div>
         </div>
       </div>
-      <p class="video-note">El video se graba desde la pestaña actual, por lo que conserva el mismo celular 3D, movimiento, luces, tarjetas y diseño que ves en pantalla. Se descarga como <b>WebM</b>.</p>
+      <p class="video-note">El video se graba desde la pestaña actual, por lo que conserva el mismo celular 3D, movimiento, luces, tarjetas y diseño que ves en pantalla. Se genera en <b>WebM</b> con hasta 60 fps y bitrate alto; en teléfonos puedes guardarlo desde el botón de compartir.</p>
     </section>
 
     <section class="video-section" id="video">

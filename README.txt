@@ -1,18 +1,20 @@
-MOCHIS BURGERS - GENERADOR DE ANUNCIO
+MOCHIS BURGERS - ANIMACIÓN REAL / MÓVIL
 
-Esta versión graba la animación REAL de la página en vez de recrearla con Canvas.
+Esta versión mantiene la captura de la página REAL: no reemplaza el teléfono 3D por otro diseño de Canvas.
 
-Cómo usar:
-1. Abre index.html en Chrome o Edge actualizado.
-2. Pulsa "Agregar imágenes" y carga hasta 6 capturas de tu app.
-3. Vuelve a la sección "CREA TU VIDEO" y pulsa "Crear video".
-4. En la ventana de captura del navegador selecciona "Esta pestaña" y pulsa "Compartir".
-5. El sitio graba durante aproximadamente 12 segundos la animación real del hero.
-6. Se descarga automáticamente como Mochis-Burgers-Anuncio-Animacion-Real.webm.
-7. También queda una vista previa y un botón para volver a descargarlo.
+CAMBIOS PARA TELÉFONOS:
+- La grabación usa hasta 60 fps y bitrate alto (20 Mbps) cuando el navegador/dispositivo lo permite.
+- En móviles, después de generar el video aparece "Guardar / compartir video". Esto evita depender únicamente de <a download>, que algunos navegadores móviles bloquean para archivos WebM grandes.
+- Si el navegador permite compartir archivos, se abre el menú nativo del teléfono para guardar el video en Archivos/Galería/Drive u otra app disponible.
+- Si el navegador no permite captura de pestaña en móvil, hay que abrirlo en Chrome actualizado o usar un dispositivo donde getDisplayMedia esté disponible.
 
-IMPORTANTE:
-- El video es una captura de la pestaña real: conserva el celular 3D, su flotación, inclinación, luces, tarjetas y las pantallas cargadas.
-- No se usa Canvas para dibujar una versión diferente del anuncio.
-- Para obtener el resultado correcto, selecciona "Esta pestaña" en la ventana de captura.
-- WebM es el formato que los navegadores pueden generar directamente. Si necesitas MP4, se puede agregar una conversión posterior.
+USO:
+1. Abre index.html.
+2. Sube tus imágenes.
+3. Pulsa Crear video.
+4. Si aparece la ventana de captura, selecciona ESTA PESTAÑA y pulsa Compartir.
+5. Espera los 12 segundos.
+6. En teléfono usa GUARDAR / COMPARTIR VIDEO para conservar el archivo.
+
+NOTA DE CALIDAD:
+La resolución final depende de la resolución que el navegador entregue a la captura de pantalla. El grabador solicita hasta 60 fps y 20 Mbps, pero el navegador puede limitar esos valores.
