@@ -1,17 +1,6 @@
+<script>
 /* =========================================================
-   MOCHIS BURGERS
-   SCRIPT COMPLETO
-   - 6 pantallas
-   - Subida de imágenes
-   - Slideshow
-   - Video independiente
-   - Movimiento real del celular durante la grabación
-   - Descarga automática
-   ========================================================= */
-
-
-/* =========================================================
-   PANTALLAS
+   GENERADOR DE VIDEO — COMPATIBILIDAD PC + ANDROID + iPHONE
    ========================================================= */
 
 const screens = [
@@ -23,881 +12,149 @@ const screens = [
   "img/pantalla6.svg"
 ];
 
-const screenImage =
-  document.getElementById("screenImage");
+const recordBtn = document.getElementById("recordVideo");
+const recordStatus = document.getElementById("recordStatus");
+const generatedVideo = document.getElementById("generatedVideo");
+const downloadGenerated = document.getElementById("downloadGenerated");
+const shareGenerated = document.getElementById("shareGenerated");
 
-const generatorPreview =
-  document.getElementById("generatorPreview");
+const captureArea = document.getElementById("videoCaptureArea");
+const capturePhone = document.getElementById("videoCapturePhone");
+const captureScreen = document.getElementById("videoCaptureScreen");
 
-const videoCaptureScreen =
-  document.getElementById("videoCaptureScreen");
-
-const videoCaptureArea =
-  document.getElementById("videoCaptureArea");
-
-const videoCapturePhone =
-  document.getElementById("videoCapturePhone");
-
-const thumbs = [
-  ...document.querySelectorAll(".screen-thumb")
-];
-
-let current = 0;
-let timer = null;
-
-let recording = false;
-let generatedUrl = null;
 let generatedBlob = null;
+let generatedUrl = null;
+let isRecording = false;
 
 
 /* =========================================================
-   UTILIDADES
+   DETECTAR FORMATO COMPATIBLE
    ========================================================= */
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-
-/* =========================================================
-   CAMBIAR TODAS LAS PANTALLAS
-   ========================================================= */
-
-function updateScreenImages(src, animate = true) {
-
-  if (screenImage) {
-
-    if (animate) {
-      screenImage.style.opacity = "0";
-
-      setTimeout(() => {
-        screenImage.src = src;
-        screenImage.style.opacity = "1";
-      }, 140);
-
-    } else {
-      screenImage.src = src;
-    }
-  }
-
-
-  if (generatorPreview) {
-    generatorPreview.src = src;
-  }
-
-
-  if (videoCaptureScreen) {
-    videoCaptureScreen.src = src;
-  }
-}
-
-
-/* =========================================================
-   MOSTRAR PANTALLA
-   ========================================================= */
-
-function showScreen(index, restart = true) {
-
-  if (
-    index < 0 ||
-    index >= screens.length ||
-    !screens[index]
-  ) {
-    return;
-  }
-
-  current = index;
-
-  updateScreenImages(
-    screens[index],
-    true
-  );
-
-
-  thumbs.forEach((button, i) => {
-
-    button.classList.toggle(
-      "active",
-      i === index
-    );
-
-  });
-
-
-  if (restart) {
-
-    clearInterval(timer);
-
-    timer = setInterval(() => {
-
-      showScreen(
-        (current + 1) % screens.length,
-        false
-      );
-
-    }, 3000);
-
-  }
-
-}
-
-
-/* =========================================================
-   TRANSICIÓN DEL TELÉFONO PRINCIPAL
-   ========================================================= */
-
-if (screenImage) {
-  screenImage.style.transition =
-    "opacity .28s ease";
-}
-
-
-/* =========================================================
-   BOTONES DE PANTALLAS
-   ========================================================= */
-
-thumbs.forEach(button => {
-
-  button.addEventListener(
-    "click",
-    () => {
-
-      const index =
-        Number(button.dataset.index);
-
-      if (!Number.isNaN(index)) {
-        showScreen(index, true);
-      }
-
-    }
-  );
-
-});
-
-
-/* =========================================================
-   INICIAR SLIDESHOW
-   ========================================================= */
-
-showScreen(0, false);
-
-timer = setInterval(() => {
-
-  showScreen(
-    (current + 1) % screens.length,
-    false
-  );
-
-}, 3000);
-
-
-/* =========================================================
-   UPLOADER
-   ========================================================= */
-
-const uploader =
-  document.getElementById("uploader");
-
-const openUploader =
-  document.getElementById("openUploader");
-
-const openUploader2 =
-  document.getElementById("openUploader2");
-
-const closeUploader =
-  document.getElementById("closeUploader");
-
-
-if (openUploader) {
-
-  openUploader.addEventListener(
-    "click",
-    () => {
-
-      if (uploader) {
-        uploader.classList.add("show");
-      }
-
-    }
-  );
-
-}
-
-
-if (openUploader2) {
-
-  openUploader2.addEventListener(
-    "click",
-    () => {
-
-      if (uploader) {
-        uploader.classList.add("show");
-      }
-
-    }
-  );
-
-}
-
-
-if (closeUploader) {
-
-  closeUploader.addEventListener(
-    "click",
-    () => {
-
-      if (uploader) {
-        uploader.classList.remove("show");
-      }
-
-    }
-  );
-
-}
-
-
-if (uploader) {
-
-  uploader.addEventListener(
-    "click",
-    event => {
-
-      if (event.target === uploader) {
-        uploader.classList.remove("show");
-      }
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   SUBIR LAS 6 IMÁGENES
-   ========================================================= */
-
-document
-  .querySelectorAll(".upload-grid input")
-  .forEach(input => {
-
-    input.addEventListener(
-      "change",
-      event => {
-
-        const file =
-          event.target.files?.[0];
-
-        if (!file) return;
-
-        if (!file.type.startsWith("image/")) {
-
-          alert(
-            "Selecciona una imagen válida."
-          );
-
-          return;
-        }
-
-
-        const slot =
-          Number(input.dataset.slot);
-
-
-        if (
-          Number.isNaN(slot) ||
-          slot < 0 ||
-          slot >= screens.length
-        ) {
-          return;
-        }
-
-
-        const url =
-          URL.createObjectURL(file);
-
-
-        screens[slot] = url;
-
-
-        /* Miniatura */
-
-        const thumb =
-          document.querySelector(
-            `.screen-thumb[data-index="${slot}"] img`
-          );
-
-
-        if (thumb) {
-          thumb.src = url;
-        }
-
-
-        /* Si es la pantalla actual */
-
-        if (slot === current) {
-
-          updateScreenImages(
-            url,
-            true
-          );
-
-        }
-
-      }
-    );
-
-  });
-
-
-/* =========================================================
-   ELEMENTOS DEL VIDEO
-   ========================================================= */
-
-const recordButton =
-  document.getElementById("recordVideo");
-
-const recordStatus =
-  document.getElementById("recordStatus");
-
-const generatedVideo =
-  document.getElementById("generatedVideo");
-
-const downloadGenerated =
-  document.getElementById("downloadGenerated");
-
-const shareGenerated =
-  document.getElementById("shareGenerated");
-
-const captureHelp =
-  document.getElementById("captureHelp");
-
-
-/* =========================================================
-   MIME
-   ========================================================= */
-
-function getRecordingMime() {
+function getSupportedMimeType() {
 
   if (!window.MediaRecorder) {
     return "";
   }
 
+  const formats = [
 
-  const types = [
+    // Algunos navegadores móviles
+    "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+    "video/mp4;codecs=avc1",
+    "video/mp4",
+
+    // Chrome / Android / PC
+    "video/webm;codecs=vp9,opus",
+    "video/webm;codecs=vp8,opus",
     "video/webm;codecs=vp9",
     "video/webm;codecs=vp8",
     "video/webm"
   ];
 
-
-  return types.find(type =>
-    MediaRecorder.isTypeSupported(type)
-  ) || "";
-
-}
-
-
-/* =========================================================
-   CARGAR HTML2CANVAS
-   ========================================================= */
-
-let html2CanvasPromise = null;
-
-
-function loadHtml2Canvas() {
-
-  if (window.html2canvas) {
-    return Promise.resolve(
-      window.html2canvas
-    );
-  }
-
-
-  if (html2CanvasPromise) {
-    return html2CanvasPromise;
-  }
-
-
-  html2CanvasPromise =
-    new Promise((resolve, reject) => {
-
-      const script =
-        document.createElement("script");
-
-
-      script.src =
-        "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-
-
-      script.async = true;
-
-
-      script.onload = () => {
-
-        if (window.html2canvas) {
-
-          resolve(
-            window.html2canvas
-          );
-
-        } else {
-
-          reject(
-            new Error(
-              "HTML2CANVAS_NO_DISPONIBLE"
-            )
-          );
-
-        }
-
-      };
-
-
-      script.onerror = () => {
-
-        reject(
-          new Error(
-            "HTML2CANVAS_ERROR"
-          )
-        );
-
-      };
-
-
-      document.head.appendChild(
-        script
-      );
-
-    });
-
-
-  return html2CanvasPromise;
-}
-
-
-/* =========================================================
-   MOSTRAR VIDEO GENERADO
-   ========================================================= */
-
-function showGenerated(blob) {
-
-  generatedBlob = blob;
-
-
-  if (generatedUrl) {
-
-    URL.revokeObjectURL(
-      generatedUrl
-    );
-
-  }
-
-
-  generatedUrl =
-    URL.createObjectURL(blob);
-
-
-  if (generatedVideo) {
-
-    generatedVideo.src =
-      generatedUrl;
-
-    generatedVideo.hidden =
-      false;
-
-  }
-
-
-  if (downloadGenerated) {
-
-    downloadGenerated.href =
-      generatedUrl;
-
-    downloadGenerated.download =
-      "Mochis-Burgers-Anuncio.webm";
-
-    downloadGenerated.hidden =
-      false;
-
-  }
-
-
-  if (shareGenerated) {
-
-    shareGenerated.hidden =
-      !(
-        navigator.share &&
-        navigator.canShare
-      );
-
-  }
-
-}
-
-
-/* =========================================================
-   COMPARTIR
-   ========================================================= */
-
-async function saveOrShareVideo() {
-
-  if (!generatedBlob) {
-    return;
-  }
-
-
-  const file =
-    new File(
-      [generatedBlob],
-      "Mochis-Burgers-Anuncio.webm",
-      {
-        type:
-          generatedBlob.type ||
-          "video/webm"
+  for (const format of formats) {
+    try {
+      if (MediaRecorder.isTypeSupported(format)) {
+        return format;
       }
-    );
+    } catch (error) {}
+  }
+
+  return "";
+}
 
 
-  try {
+/* =========================================================
+   NOMBRE DEL ARCHIVO
+   ========================================================= */
 
-    if (
-      navigator.share &&
-      navigator.canShare &&
-      navigator.canShare({
-        files: [file]
-      })
-    ) {
+function getVideoExtension(mime) {
 
-      await navigator.share({
+  if (mime.includes("mp4")) {
+    return "mp4";
+  }
 
-        title:
-          "Mochis Burgers",
-
-        text:
-          "Video publicitario de Mochis Burgers",
-
-        files: [file]
-
-      });
+  return "webm";
+}
 
 
-      if (recordStatus) {
+/* =========================================================
+   ESPERAR
+   ========================================================= */
 
-        recordStatus.textContent =
-          "Video listo para guardar o compartir.";
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-      }
 
+/* =========================================================
+   ACTUALIZAR PANTALLA
+   ========================================================= */
 
-      return;
+async function changeCaptureScreen(index) {
 
-    }
+  if (!captureScreen) return;
 
-  } catch (error) {
+  captureScreen.style.opacity = "0";
 
-    if (
-      error &&
-      error.name === "AbortError"
-    ) {
+  await wait(180);
+
+  captureScreen.src = screens[index % screens.length];
+
+  await new Promise(resolve => {
+
+    if (captureScreen.complete) {
+      resolve();
       return;
     }
 
-  }
+    captureScreen.onload = resolve;
+    captureScreen.onerror = resolve;
 
+  });
 
-  if (generatedUrl) {
+  await wait(100);
 
-    window.open(
-      generatedUrl,
-      "_blank"
-    );
-
-  }
-
+  captureScreen.style.opacity = "1";
 }
 
 
 /* =========================================================
-   PREPARAR ÁREA DEL VIDEO
+   MOVIMIENTO REAL DEL TELÉFONO
    ========================================================= */
 
-function prepareCaptureArea() {
+function animateCapturePhone(time) {
 
-  if (!videoCaptureArea) {
-
-    throw new Error(
-      "NO_VIDEO_CAPTURE_AREA"
-    );
-
-  }
-
+  if (!capturePhone) return;
 
   /*
-    NO visibility:hidden.
-    El elemento queda fuera de pantalla,
-    pero sigue siendo renderizable.
+    Movimiento suave en 3D.
+    Esto se hace con JavaScript durante la grabación
+    para que html2canvas capture el movimiento realmente.
   */
 
-  videoCaptureArea.style.position =
-    "fixed";
+  const seconds = time / 1000;
 
-  videoCaptureArea.style.left =
-    "-10000px";
+  const y = Math.sin(seconds * 2.1) * 18;
+  const x = Math.sin(seconds * 1.35) * 7;
 
-  videoCaptureArea.style.top =
-    "0px";
+  const rotateY = Math.sin(seconds * 1.4) * 10;
+  const rotateX = Math.cos(seconds * 1.1) * 3;
 
-  videoCaptureArea.style.width =
-    "900px";
-
-  videoCaptureArea.style.height =
-    "900px";
-
-  videoCaptureArea.style.visibility =
-    "visible";
-
-  videoCaptureArea.style.opacity =
-    "1";
-
-  videoCaptureArea.style.pointerEvents =
-    "none";
-
-  videoCaptureArea.style.zIndex =
-    "999999";
-
-
-  if (videoCaptureScreen) {
-
-    videoCaptureScreen.src =
-      screens[current];
-
-  }
-
-}
-
-
-/* =========================================================
-   MOVIMIENTO DEL CELULAR
-   ========================================================= */
-
-/*
-   ESTA ES LA PARTE NUEVA.
-
-   En vez de confiar en @keyframes,
-   nosotros calculamos el movimiento
-   durante la grabación.
-
-   Así html2canvas recibe un celular
-   diferente en cada frame.
-*/
-
-function animateVideoPhone(time) {
-
-  if (!videoCapturePhone) {
-    return;
-  }
-
-
-  /*
-    Tiempo en segundos
-  */
-
-  const t =
-    time / 1000;
-
-
-  /*
-    Flotación vertical
-  */
-
-  const y =
-    Math.sin(t * 1.8) * 18;
-
-
-  /*
-    Movimiento horizontal suave
-  */
-
-  const x =
-    Math.sin(t * 1.05) * 10;
-
-
-  /*
-    Rotación izquierda/derecha
-  */
-
-  const rotateY =
-    Math.sin(t * 1.25) * 8;
-
-
-  /*
-    Inclinación
-  */
-
-  const rotateZ =
-    Math.sin(t * 1.55) * 3;
-
-
-  /*
-    Rotación X
-  */
-
-  const rotateX =
-    Math.cos(t * 1.15) * 4;
-
-
-  /*
-    Escala ligera para dar
-    sensación de movimiento
-  */
+  const rotateZ = Math.sin(seconds * 1.7) * 1.2;
 
   const scale =
     1 +
-    Math.sin(t * 1.3) * 0.018;
+    (Math.sin(seconds * 1.15) * 0.012);
 
-
-  /*
-    Aplicar transformación.
-
-    IMPORTANTE:
-    No usamos la animación CSS
-    mientras grabamos.
-  */
-
-  videoCapturePhone.style.animation =
-    "none";
-
-
-  videoCapturePhone.style.transform =
-    `
-      translate3d(${x}px, ${y}px, 0)
-      rotateX(${rotateX}deg)
-      rotateY(${rotateY}deg)
-      rotateZ(${rotateZ}deg)
-      scale(${scale})
-    `;
-
-}
-
-
-/* =========================================================
-   MOVIMIENTO DE LAS LUCES
-   ========================================================= */
-
-function animateVideoLights(time) {
-
-  if (!videoCaptureArea) {
-    return;
-  }
-
-
-  const t =
-    time / 1000;
-
-
-  const glowLeft =
-    videoCaptureArea.querySelector(
-      ".glow-left"
-    );
-
-  const glowRight =
-    videoCaptureArea.querySelector(
-      ".glow-right"
-    );
-
-
-  if (glowLeft) {
-
-    const x =
-      Math.sin(t * 0.8) * 80;
-
-    const y =
-      Math.cos(t * 0.7) * 40;
-
-    glowLeft.style.transform =
-      `translate(${x}px, ${y}px)`;
-
-  }
-
-
-  if (glowRight) {
-
-    const x =
-      Math.cos(t * 0.9) * 80;
-
-    const y =
-      Math.sin(t * 0.75) * 40;
-
-    glowRight.style.transform =
-      `translate(${x}px, ${y}px)`;
-
-  }
-
-}
-
-
-/* =========================================================
-   CAPTURAR FRAME
-   ========================================================= */
-
-async function captureFrame(
-  canvas,
-  html2canvas
-) {
-
-  const frame =
-    await html2canvas(
-      videoCaptureArea,
-      {
-
-        backgroundColor:
-          null,
-
-        useCORS:
-          true,
-
-        allowTaint:
-          false,
-
-        logging:
-          false,
-
-        scale:
-          1,
-
-        width:
-          900,
-
-        height:
-          900,
-
-        imageTimeout:
-          5000
-
-      }
-    );
-
-
-  const ctx =
-    canvas.getContext("2d");
-
-
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-
-  ctx.drawImage(
-    frame,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
+  capturePhone.style.transform = `
+    perspective(1400px)
+    translate3d(${x}px, ${y}px, 0)
+    rotateX(${rotateX}deg)
+    rotateY(${rotateY}deg)
+    rotateZ(${rotateZ}deg)
+    scale(${scale})
+  `;
 }
 
 
@@ -907,546 +164,351 @@ async function captureFrame(
 
 async function createVideo() {
 
-  if (recording) {
+  if (isRecording) return;
+
+  if (!window.html2canvas) {
+
+    alert(
+      "No se pudo cargar el sistema de captura. " +
+      "Recarga la página e inténtalo nuevamente."
+    );
+
     return;
   }
-
 
   if (!window.MediaRecorder) {
 
-    if (recordStatus) {
-
-      recordStatus.textContent =
-        "Tu navegador no permite crear videos. Usa Chrome actualizado.";
-
-    }
+    alert(
+      "Tu navegador no permite crear videos directamente. " +
+      "Prueba con Chrome o Safari actualizado."
+    );
 
     return;
-
   }
 
+  isRecording = true;
 
-  const mime =
-    getRecordingMime();
-
-
-  if (!mime) {
-
-    if (recordStatus) {
-
-      recordStatus.textContent =
-        "Este navegador no tiene un formato de video compatible.";
-
-    }
-
-    return;
-
-  }
-
-
-  recording = true;
-
-
-  if (recordButton) {
-
-    recordButton.disabled =
-      true;
-
-    recordButton.textContent =
-      "● Preparando...";
-
-  }
-
+  recordBtn.disabled = true;
+  recordBtn.textContent = "● Creando video...";
 
   if (recordStatus) {
-
-    recordStatus.textContent =
-      "Preparando el anuncio...";
-
+    recordStatus.textContent = "Preparando video...";
   }
 
+  generatedVideo.hidden = true;
+  downloadGenerated.hidden = true;
+  shareGenerated.hidden = true;
 
-  clearInterval(timer);
+  if (generatedUrl) {
+    URL.revokeObjectURL(generatedUrl);
+    generatedUrl = null;
+  }
 
+  generatedBlob = null;
+
+
+  /* ---------------------------------------------
+     PREPARAR ÁREA DE CAPTURA
+     --------------------------------------------- */
+
+  const oldVisibility = captureArea.style.visibility;
+  const oldOpacity = captureArea.style.opacity;
+  const oldLeft = captureArea.style.left;
+  const oldAnimation = capturePhone.style.animation;
+  const oldTransform = capturePhone.style.transform;
+
+  captureArea.style.visibility = "visible";
+  captureArea.style.opacity = "1";
+  captureArea.style.left = "-10000px";
+
+  /*
+    Desactivamos la animación CSS temporalmente.
+    JavaScript controlará el movimiento para que
+    cada frame tenga una posición diferente.
+  */
+
+  capturePhone.style.animation = "none";
+
+
+  /* ---------------------------------------------
+     PREPARAR CANVAS
+     --------------------------------------------- */
+
+  const rect = captureArea.getBoundingClientRect();
+
+  const width = Math.max(720, Math.round(rect.width));
+  const height = Math.max(720, Math.round(rect.height));
+
+  const canvas = document.createElement("canvas");
+
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext("2d", {
+    alpha: false
+  });
+
+
+  /* ---------------------------------------------
+     STREAM DEL CANVAS
+     --------------------------------------------- */
+
+  const fps = 20;
+
+  const stream = canvas.captureStream(fps);
+
+  const mimeType = getSupportedMimeType();
+
+  let recorder;
 
   try {
 
-    /* =========================================
-       CARGAR MOTOR DE CAPTURA
-       ========================================= */
-
-    const html2canvas =
-      await loadHtml2Canvas();
-
-
-    /* =========================================
-       PREPARAR ÁREA
-       ========================================= */
-
-    prepareCaptureArea();
-
-
-    await sleep(500);
-
-
-    /* =========================================
-       CANVAS DEL VIDEO
-       ========================================= */
-
-    const canvas =
-      document.createElement(
-        "canvas"
-      );
-
-
-    canvas.width =
-      900;
-
-    canvas.height =
-      900;
-
-
-    const stream =
-      canvas.captureStream(20);
-
-
-    const recorder =
-      new MediaRecorder(
-        stream,
-        {
-
-          mimeType:
-            mime,
-
-          videoBitsPerSecond:
-            16000000
-
-        }
-      );
-
-
-    const chunks = [];
-
-
-    recorder.ondataavailable =
-      event => {
-
-        if (
-          event.data &&
-          event.data.size
-        ) {
-
-          chunks.push(
-            event.data
-          );
-
-        }
-
-      };
-
-
-    /* =========================================
-       INICIO
-       ========================================= */
-
-    const duration =
-      12000;
-
-    const start =
-      performance.now();
-
-    let lastCapture =
-      0;
-
-    let lastScreenChange =
-      0;
-
-    let videoScreen =
-      current;
-
-
-    /* =========================================
-       PRIMER FRAME
-       ========================================= */
-
-    animateVideoPhone(0);
-
-    animateVideoLights(0);
-
-    await captureFrame(
-      canvas,
-      html2canvas
-    );
-
-
-    recorder.start(250);
-
-
-    if (recordStatus) {
-
-      recordStatus.textContent =
-        "🔴 Creando anuncio... 0%";
-
-    }
-
-
-    /* =========================================
-       LOOP PRINCIPAL
-       ========================================= */
-
-    while (
-      performance.now() - start <
-      duration
-    ) {
-
-      const now =
-        performance.now();
-
-      const elapsed =
-        now - start;
-
-
-      /*
-        ========================================
-        MOVIMIENTO DEL CELULAR
-        ========================================
-      */
-
-      animateVideoPhone(
-        elapsed
-      );
-
-
-      /*
-        ========================================
-        MOVIMIENTO DE LUCES
-        ========================================
-      */
-
-      animateVideoLights(
-        elapsed
-      );
-
-
-      /*
-        ========================================
-        CAMBIO DE PANTALLA
-        Cada 2 segundos
-        ========================================
-      */
-
-      if (
-        elapsed -
-        lastScreenChange >=
-        2000
-      ) {
-
-        videoScreen =
-          (
-            videoScreen + 1
-          ) %
-          screens.length;
-
-
-        current =
-          videoScreen;
-
-
-        if (videoCaptureScreen) {
-
-          videoCaptureScreen.src =
-            screens[videoScreen];
-
-        }
-
-
-        lastScreenChange =
-          elapsed;
-
-
-        /*
-          Esperamos un poco para
-          que cargue la imagen.
-        */
-
-        await sleep(70);
-
-      }
-
-
-      /*
-        ========================================
-        CAPTURA A 20 FPS
-        ========================================
-      */
-
-      if (
-        elapsed -
-        lastCapture >=
-        50
-      ) {
-
-        await captureFrame(
-          canvas,
-          html2canvas
-        );
-
-
-        lastCapture =
-          elapsed;
-
-      }
-
-
-      /*
-        ========================================
-        PROGRESO
-        ========================================
-      */
-
-      const percent =
-        Math.min(
-          100,
-          Math.round(
-            (elapsed / duration) *
-            100
-          )
-        );
-
-
-      if (recordStatus) {
-
-        recordStatus.textContent =
-          `🔴 Creando anuncio... ${percent}%`;
-
-      }
-
-
-      await sleep(5);
-
-    }
-
-
-    /* =========================================
-       ÚLTIMO FRAME
-       ========================================= */
-
-    animateVideoPhone(
-      duration
-    );
-
-    animateVideoLights(
-      duration
-    );
-
-
-    await captureFrame(
-      canvas,
-      html2canvas
-    );
-
-
-    /* =========================================
-       DETENER
-       ========================================= */
-
-    if (
-      recorder.state !==
-      "inactive"
-    ) {
-
-      recorder.stop();
-
-    }
-
-
-    await new Promise(resolve => {
-
-      recorder.addEventListener(
-        "stop",
-        resolve,
-        {
-          once: true
-        }
-      );
-
-    });
-
-
-    stream
-      .getTracks()
-      .forEach(track =>
-        track.stop()
-      );
-
-
-    /* =========================================
-       CREAR BLOB
-       ========================================= */
-
-    const blob =
-      new Blob(
-        chunks,
-        {
-          type: mime
-        }
-      );
-
-
-    if (!blob.size) {
-
-      throw new Error(
-        "EMPTY_VIDEO"
-      );
-
-    }
-
-
-    showGenerated(
-      blob
-    );
-
-
-    /* =========================================
-       DESCARGA AUTOMÁTICA
-       ========================================= */
-
-    const link =
-      document.createElement(
-        "a"
-      );
-
-
-    link.href =
-      generatedUrl;
-
-    link.download =
-      "Mochis-Burgers-Anuncio.webm";
-
-    link.style.display =
-      "none";
-
-
-    document.body.appendChild(
-      link
-    );
-
-
-    link.click();
-
-
-    link.remove();
-
-
-    if (recordStatus) {
-
-      recordStatus.textContent =
-        "✅ ¡Video creado y descargado!";
-
-    }
-
-
-    if (captureHelp) {
-
-      captureHelp.innerHTML =
-        "El video contiene únicamente el <b>fondo, el celular animado y las 6 pantallas</b>.";
-
-    }
-
+    recorder = mimeType
+      ? new MediaRecorder(stream, {
+          mimeType,
+          videoBitsPerSecond: 6000000
+        })
+      : new MediaRecorder(stream);
 
   } catch (error) {
 
-    console.error(
-      "Error al crear video:",
-      error
+    console.error(error);
+
+    capturePhone.style.animation = oldAnimation;
+    capturePhone.style.transform = oldTransform;
+
+    captureArea.style.visibility = oldVisibility;
+    captureArea.style.opacity = oldOpacity;
+    captureArea.style.left = oldLeft;
+
+    recordBtn.disabled = false;
+    recordBtn.textContent = "● Crear video";
+
+    alert(
+      "Tu navegador no permite generar este video. " +
+      "Actualiza Chrome/Safari o prueba desde otro navegador."
     );
 
+    isRecording = false;
 
-    if (recordStatus) {
-
-      recordStatus.textContent =
-        "No se pudo crear el video. Revisa que exista #videoCaptureArea y vuelve a intentarlo.";
-
-    }
-
-  } finally {
-
-    /* =========================================
-       RESTAURAR CAPTURA
-       ========================================= */
-
-    if (videoCaptureArea) {
-
-      videoCaptureArea.style.left =
-        "-10000px";
-
-      videoCaptureArea.style.visibility =
-        "visible";
-
-    }
-
-
-    /*
-      Quitamos la transformación
-      manual del video.
-    */
-
-    if (videoCapturePhone) {
-
-      videoCapturePhone.style.transform =
-        "";
-
-      videoCapturePhone.style.animation =
-        "";
-
-    }
-
-
-    /* =========================================
-       RESTAURAR SLIDESHOW
-       ========================================= */
-
-    clearInterval(timer);
-
-
-    timer =
-      setInterval(() => {
-
-        showScreen(
-          (current + 1) %
-          screens.length,
-          false
-        );
-
-      }, 3000);
-
-
-    recording =
-      false;
-
-
-    if (recordButton) {
-
-      recordButton.disabled =
-        false;
-
-      recordButton.textContent =
-        "● Crear video";
-
-    }
-
+    return;
   }
 
+
+  const chunks = [];
+
+  recorder.ondataavailable = event => {
+
+    if (event.data && event.data.size > 0) {
+      chunks.push(event.data);
+    }
+
+  };
+
+
+  /* ---------------------------------------------
+     CUANDO TERMINA
+     --------------------------------------------- */
+
+  recorder.onstop = async () => {
+
+    const finalType =
+      recorder.mimeType ||
+      mimeType ||
+      "video/webm";
+
+    generatedBlob = new Blob(chunks, {
+      type: finalType
+    });
+
+    generatedUrl = URL.createObjectURL(generatedBlob);
+
+    generatedVideo.src = generatedUrl;
+
+    generatedVideo.controls = true;
+    generatedVideo.playsInline = true;
+    generatedVideo.preload = "metadata";
+
+    generatedVideo.hidden = false;
+
+    /*
+      Importante para móviles:
+      no intentamos reproducir automáticamente.
+      El usuario puede tocar Play.
+    */
+
+    const extension = getVideoExtension(finalType);
+
+    const fileName =
+      "mochis-burgers-video-" +
+      Date.now() +
+      "." +
+      extension;
+
+    downloadGenerated.href = generatedUrl;
+    downloadGenerated.download = fileName;
+    downloadGenerated.hidden = false;
+
+    shareGenerated.hidden = false;
+
+    recordBtn.disabled = false;
+    recordBtn.textContent = "● Crear video";
+
+    if (recordStatus) {
+      recordStatus.textContent =
+        "Video creado correctamente. Toca ▶ para reproducirlo.";
+    }
+
+
+    /* ---------------------------------------------
+       RESTAURAR CAPTURA
+       --------------------------------------------- */
+
+    capturePhone.style.animation = oldAnimation;
+    capturePhone.style.transform = oldTransform;
+
+    captureArea.style.visibility = oldVisibility;
+    captureArea.style.opacity = oldOpacity;
+    captureArea.style.left = oldLeft;
+
+    isRecording = false;
+  };
+
+
+  recorder.onerror = error => {
+
+    console.error("Error MediaRecorder:", error);
+
+    try {
+      recorder.stop();
+    } catch (e) {}
+
+  };
+
+
+  /* ---------------------------------------------
+     INICIAR GRABACIÓN
+     --------------------------------------------- */
+
+  await changeCaptureScreen(0);
+
+  await wait(500);
+
+  recorder.start(250);
+
+
+  /* ---------------------------------------------
+     CAPTURAR FRAMES
+     --------------------------------------------- */
+
+  const duration = 12000;
+
+  const startTime = performance.now();
+
+  let lastScreen = -1;
+
+  async function captureFrame(now) {
+
+    if (!isRecording) return;
+
+    const elapsed = now - startTime;
+
+    /* Movimiento real del teléfono */
+    animateCapturePhone(elapsed);
+
+    /* Cambiar pantalla cada 2 segundos */
+    const screenIndex =
+      Math.min(
+        screens.length - 1,
+        Math.floor(elapsed / 2000)
+      );
+
+    if (screenIndex !== lastScreen) {
+
+      lastScreen = screenIndex;
+
+      await changeCaptureScreen(screenIndex);
+    }
+
+
+    /* Capturar SOLO el área del video */
+
+    try {
+
+      const rendered = await html2canvas(captureArea, {
+
+        backgroundColor: "#07070a",
+
+        width: width,
+        height: height,
+
+        scale: 1,
+
+        useCORS: true,
+
+        allowTaint: false,
+
+        logging: false,
+
+        imageTimeout: 5000,
+
+        removeContainer: true,
+
+        foreignObjectRendering: false
+      });
+
+
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.drawImage(
+        rendered,
+        0,
+        0,
+        width,
+        height
+      );
+
+    } catch (error) {
+
+      console.warn(
+        "No se pudo capturar un frame:",
+        error
+      );
+    }
+
+
+    if (elapsed < duration) {
+
+      setTimeout(() => {
+        requestAnimationFrame(captureFrame);
+      }, 50);
+
+    } else {
+
+      if (recordStatus) {
+        recordStatus.textContent =
+          "Finalizando video...";
+      }
+
+      try {
+        recorder.stop();
+      } catch (error) {}
+
+    }
+  }
+
+
+  requestAnimationFrame(captureFrame);
 }
 
 
 /* =========================================================
-   BOTONES
+   BOTÓN CREAR VIDEO
    ========================================================= */
 
-if (recordButton) {
+if (recordBtn) {
 
-  recordButton.addEventListener(
+  recordBtn.addEventListener(
     "click",
     createVideo
   );
@@ -1454,18 +516,102 @@ if (recordButton) {
 }
 
 
+/* =========================================================
+   COMPARTIR / GUARDAR EN CELULAR
+   ========================================================= */
+
 if (shareGenerated) {
 
   shareGenerated.addEventListener(
     "click",
-    saveOrShareVideo
+    async () => {
+
+      if (!generatedBlob) {
+        alert("Primero crea el video.");
+        return;
+      }
+
+      const mime =
+        generatedBlob.type ||
+        "video/webm";
+
+      const extension =
+        getVideoExtension(mime);
+
+      const fileName =
+        "mochis-burgers-video." +
+        extension;
+
+      const file = new File(
+        [generatedBlob],
+        fileName,
+        {
+          type: mime
+        }
+      );
+
+
+      /* ---------------------------------------------
+         SHARE API
+         --------------------------------------------- */
+
+      if (
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare({
+          files: [file]
+        })
+      ) {
+
+        try {
+
+          await navigator.share({
+            title: "Mochis Burgers",
+            text: "Video de Mochis Burgers",
+            files: [file]
+          });
+
+          return;
+
+        } catch (error) {
+
+          /*
+            Si el usuario cancela compartir,
+            simplemente no hacemos nada.
+          */
+
+          if (error.name === "AbortError") {
+            return;
+          }
+
+        }
+      }
+
+
+      /* ---------------------------------------------
+         FALLBACK
+         --------------------------------------------- */
+
+      const link =
+        document.createElement("a");
+
+      link.href = generatedUrl;
+      link.download = fileName;
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+    }
   );
 
 }
 
 
 /* =========================================================
-   LIMPIEZA
+   LIMPIAR URL AL CERRAR LA PÁGINA
    ========================================================= */
 
 window.addEventListener(
@@ -1473,12 +619,9 @@ window.addEventListener(
   () => {
 
     if (generatedUrl) {
-
-      URL.revokeObjectURL(
-        generatedUrl
-      );
-
+      URL.revokeObjectURL(generatedUrl);
     }
 
   }
 );
+</script>
